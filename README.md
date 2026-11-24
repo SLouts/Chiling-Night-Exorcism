@@ -1,2 +1,26 @@
-# Chiling-Night-Exorcism
-用聲音唸咒驅邪的網頁遊戲。對著麥克風唸出符紙上的咒語，在鬼踏進法陣前把牠送走。A voice-controlled Chinese exorcism game. Read the incantations on the talisman aloud to banish ghosts before they reach you.
+# 敕令・夜行驅邪 Chiling: Night Exorcism
+
+子時已過，有東西跟著你。
+符紙上的咒語，大聲唸出來——在牠踏進法陣之前，把牠送走。
+
+一款用語音辨識遊玩的中式驅邪網頁遊戲，靈感來自 Spiritus Sancti。
+
+## 玩法
+- 對著麥克風唸出符紙上的咒語，唸完一句就能逼退鬼。
+- 鬼踏進法陣會吸走陽氣，三點陽氣用完就輸。
+- 危急時唸「五雷號令」可召天雷，大幅擊退鬼。
+
+## 內容
+- 五個章節：夜巷、河畔、義莊、山林、鬼門
+- 十一種鬼：遊魂、厲鬼、水鬼、吊死鬼、紙人、殭屍、赤殭、魔神仔、夜叉、九尾狐妖、鬼王
+- 每種鬼有自己的規矩：殭屍要屏息、紙人要憑記憶唸、狐妖會用幻術換字……
+- 咒語取自道教與佛教經典，如《淨天地神咒》、《金光神咒》、《心經》、《清靜經》
+
+## 開始玩
+用 Chrome、Edge 或 Safari 開啟遊戲網頁，允許使用麥克風即可。
+沒有麥克風時，也可以在下方打字代替念咒。
+
+## 技術
+- 單一 HTML 檔，不需安裝
+- 語音辨識：瀏覽器內建 Web Speech API
+- 讀音比對：pinyin-pro，容許同音字與近音字
