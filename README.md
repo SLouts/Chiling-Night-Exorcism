@@ -24,3 +24,6 @@
 - 單一 HTML 檔，不需安裝
 - 語音辨識：瀏覽器內建 Web Speech API
 - 讀音比對：pinyin-pro，容許同音字與近音字
+
+## 字型
+內建 [LXGW WenKai TC（霞鶩文楷）](https://github.com/lxgw/LxgwWenKai)子集，採 SIL OFL 授權，位於 `fonts/`，不依賴外部字型服務。

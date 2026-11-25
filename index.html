@@ -5,14 +5,16 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#07080a">
 <title>敕令・夜行驅邪</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=LXGW+WenKai+TC:wght@400;700&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
+<link rel="preload" href="fonts/LXGWWenKaiTC-400.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/LXGWWenKaiTC-700.woff2" as="font" type="font/woff2" crossorigin>
 <style>
+@font-face{font-family:"LXGW WenKai TC";font-weight:400;font-style:normal;font-display:block;src:url(fonts/LXGWWenKaiTC-400.woff2) format("woff2")}
+@font-face{font-family:"LXGW WenKai TC";font-weight:700;font-style:normal;font-display:block;src:url(fonts/LXGWWenKaiTC-700.woff2) format("woff2")}
+@font-face{font-family:"ChilingBrush";font-weight:400;font-style:normal;font-display:block;src:url(fonts/LXGWWenKaiTC-700.woff2) format("woff2")}
 :root{
  --red:#b3261e;--gold:#f2c35b;
  --kai:"LXGW WenKai TC","KaiTi","Kaiti TC","BiauKai","DFKai-SB","Noto Serif TC","Noto Serif CJK TC","Songti TC",serif;
- --brush:"Ma Shan Zheng","LXGW WenKai TC","KaiTi","Kaiti TC","Noto Serif CJK TC",serif;
+ --brush:"ChilingBrush","LXGW WenKai TC","KaiTi","Kaiti TC","Noto Serif CJK TC",serif;
  --noise:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .32  0 0 0 0 .2  0 0 0 0 .06  0 0 0 .55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
  --fiber:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='320' height='320'><filter id='f'><feTurbulence type='fractalNoise' baseFrequency='.012 .35' numOctaves='2' seed='4'/><feColorMatrix values='0 0 0 0 .45  0 0 0 0 .3  0 0 0 0 .1  0 0 0 .35 -.05'/></filter><rect width='100%' height='100%' filter='url(%23f)'/></svg>");
 }
@@ -290,7 +292,7 @@ body[data-mode=split] #chap .ct{font-size:80px}
 const $=id=>document.getElementById(id);
 const cv=$('cv'),ctx=cv.getContext('2d');
 const CF='"LXGW WenKai TC","KaiTi","Kaiti TC","Noto Serif CJK TC",serif';
-const BF='"Ma Shan Zheng","LXGW WenKai TC","KaiTi","Kaiti TC","Noto Serif CJK TC",serif';
+const BF='"ChilingBrush","LXGW WenKai TC","KaiTi","Kaiti TC","Noto Serif CJK TC",serif';
 const hs=i=>{const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x)};
 const lerp=(a,b,k)=>a+(b-a)*k;
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -1503,7 +1505,7 @@ let fontsOK=false;
 function loadFonts(){
   if(!document.fonts||!document.fonts.load)return Promise.resolve();
   const txt=[...new Set((document.body.innerText+JSON.stringify(DEF)+JSON.stringify(CHAPTERS)+'壽奠敕').match(/[㐀-鿿]/g)||[])].join('');
-  return Promise.all(['400 24px "LXGW WenKai TC"','700 24px "LXGW WenKai TC"','400 24px "Ma Shan Zheng"'].map(f=>document.fonts.load(f,txt))).catch(()=>{});
+  return Promise.all(['400 24px "LXGW WenKai TC"','700 24px "LXGW WenKai TC"','400 24px "ChilingBrush"'].map(f=>document.fonts.load(f,txt))).catch(()=>{});
 }
 function initFonts(){
   const go=$('go'),label=go.textContent;go.disabled=true;go.textContent='載入字型…';
