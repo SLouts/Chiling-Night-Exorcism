@@ -145,13 +145,21 @@ button{font-family:inherit;cursor:pointer}
 .ov .big{padding:12px 34px;font-size:19px;letter-spacing:6px;background:linear-gradient(#a21f15,#7a140d);color:#ffe9b0;border:2px solid var(--gold);border-radius:4px;box-shadow:0 0 24px #b3261e66}
 .ov .big:hover{box-shadow:0 0 34px #e0503a99}
 .ov small{color:#8d805c;font-size:12px;max-width:380px;line-height:1.6}
-#chapSel{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px}
-#chapSel button{background:#1a110ecc;border:1px solid #5b4a2a;color:#b8a983;border-radius:4px;padding:6px 10px;font-size:13px;letter-spacing:1px}
-#chapSel button.sel{border-color:var(--gold);color:#ffe3a0;background:#3a1a12}
+#chapSel,#diffSel{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:440px}
+#chapSel button,#diffSel button{background:#1a110ecc;border:1px solid #5b4a2a;color:#b8a983;border-radius:4px;padding:6px 10px;font-size:13px;letter-spacing:1px}
+#chapSel button.sel,#diffSel button.sel{border-color:var(--gold);color:#ffe3a0;background:#3a1a12}
 #chapSel button b{display:block;font-size:16px;font-weight:400;color:inherit;letter-spacing:3px}
 #rank{font-family:var(--brush);font-size:64px;color:#ffd86a;text-shadow:0 0 24px #ff8a2a;line-height:1}
 #stats{display:grid;grid-template-columns:auto auto;gap:4px 18px;font-size:15px;color:#d2c49c;letter-spacing:2px}
 #stats span:nth-child(odd){text-align:right;color:#a99a72}
+
+.btn:disabled{opacity:.55;cursor:wait}
+#rec{font-size:12px;color:#a99a72;letter-spacing:2px;line-height:1.6}
+#rec:empty,#warn:empty,#newrec:empty{display:none}
+#warn{max-width:400px;font-size:13px;line-height:1.6;color:#ffc2b4;background:#2a0f0cdd;border:1px solid #8a1a12;border-radius:6px;padding:8px 12px}
+#newrec{font-size:14px;color:#ffd86a;letter-spacing:2px;line-height:1.7}
+#diffSel button{padding:4px 12px}
+.ph{max-width:100%}
 
 /* ---------- 電腦版 ---------- */
 body[data-mode=desk] #hud{padding:16px 32px 0}
@@ -257,6 +265,9 @@ body[data-mode=split] #chap .ct{font-size:80px}
   <p>子時已過，有東西跟著你。<br>符紙上的咒語，<b style="color:#f6e3b0">大聲唸出來</b>——<br>在牠踏進法陣之前，把牠送走。</p>
   <p style="font-size:13px;color:#b8a983">危急時唸「<b style="color:#ffd86a">五雷號令</b>」可召天雷，每章補一張雷符。<br>每種鬼都有自己的規矩，留意出場時的提示。</p>
   <div id="chapSel"></div>
+  <div id="diffSel"></div>
+  <div id="rec"></div>
+  <div id="warn"></div>
   <button id="go" class="btn big">開始驅邪</button>
   <small id="support"></small>
 </div>
@@ -267,6 +278,7 @@ body[data-mode=split] #chap .ct{font-size:80px}
   <div class="lab">評　等</div>
   <div id="rank"></div>
   <div id="stats"></div>
+  <div id="newrec"></div>
   <button id="again" class="btn big">再來一次</button>
   <button id="menu" class="btn">回到選單</button>
 </div>
@@ -347,7 +359,7 @@ function fz(x){
 function syl(str){
   try{return PY.pinyin(str,{toneType:'none',type:'array',nonZh:'removed'}).map(fz)}catch(e){return norm(str)}
 }
-const MATCH_RATIO=.8,WINDOW=1.4; // 過關比例／只看最近幾倍長度的語音（越高越難）
+let MATCH_RATIO=.8,WINDOW=1.4; // 過關比例／只看最近幾倍長度的語音（越高越難）
 function matchSet(tgt,heard){
   const Tc=norm(tgt),Sc=norm(heard).slice(-Math.ceil(Tc.length*WINDOW));
   const set=lcsSet(Tc,Sc);
@@ -430,6 +442,8 @@ function startRec(){
   r.onerror=e=>{
     if(my!==recToken)return;
     if(e.error==='not-allowed'||e.error==='service-not-allowed'){wantMic=false;setMic('off');$('heard').textContent='麥克風被拒絕，請改用下方打字模式'}
+    else if(e.error==='audio-capture'){wantMic=false;setMic('off');$('heard').textContent='找不到麥克風，請改用下方打字模式'}
+    else if(e.error==='network')$('heard').textContent='語音服務連不上（需要網路），可先改用下方打字'
     else if(e.error==='language-not-supported')langIdx++;
   };
   r.onend=()=>{if(my===recToken&&wantMic&&st.running)setTimeout(()=>{if(my===recToken)startRec()},160)};
@@ -459,6 +473,7 @@ function renderFu(){
   $('fuTag').textContent=g.d.boss?`〈${g.d.spell}〉`:`《${g.d.spell}》`;
   $('fuLines').style.setProperty('--bl','0px');
   fu.classList.remove('dark','tremble','hushed');
+  fitPhrases();
   setSub();
 }
 function paintMatched(all){
@@ -606,6 +621,7 @@ function endGame(win){
   $('rank').textContent=rank;
   const o=ORDER[st.oi],ch=CHAPTERS[o.ci];
   $('stats').innerHTML=[['功德',st.score],['到達',`${ch.title}・${DEF[o.id].name}`],['最高連唸',st.maxCombo],['神速',st.fast+' 次'],['屏息成功',st.hushOK+' 次']].map(([a,b])=>`<span>${a}</span><span>${b}</span>`).join('');
+  saveResult(win,rank,o.ci);
   setTimeout(()=>$('end').classList.remove('hide'),win?1400:800);
   if(win){bell(523,.25,3);setTimeout(()=>bell(784,.2,3),300);setTimeout(()=>bell(1046,.15,3),600)}
 }
@@ -622,7 +638,7 @@ function newGame(ci){
 let selCh=0;
 $('chapSel').innerHTML=CHAPTERS.map((c,i)=>`<button data-i="${i}" class="${i?'':'sel'}">${c.name.replace('　','')}<b>${c.title}</b></button>`).join('');
 $('chapSel').onclick=e=>{const b=e.target.closest('button');if(!b)return;selCh=+b.dataset.i;[...$('chapSel').children].forEach((x,i)=>x.classList.toggle('sel',i===selCh))};
-function begin(ci){initAudio();if(SR){wantMic=true;setMic('wait')}newGame(ci)}
+function begin(ci){initAudio();if(SR){wantMic=true;setMic('wait')}newGame(ci);if(!SR)setTimeout(()=>$('typed').focus(),300)}
 $('go').onclick=()=>begin(selCh);
 $('again').onclick=()=>begin(selCh);
 $('menu').onclick=()=>{$('end').classList.add('hide');$('start').classList.remove('hide')};
@@ -654,7 +670,7 @@ function resize(){
   document.body.dataset.mode=MODE;
   W=MODE==='split'?Math.round(FW*.58):FW;
   cv.width=FW*DPR;cv.height=H*DPR;ctx.setTransform(DPR,0,0,DPR,0,0);
-  buildStatic();buildVignette();
+  buildStatic();buildVignette();fitPhrases();
 }
 function buildVignette(){
   vigC.width=W;vigC.height=H;const c=vigC.getContext('2d');
@@ -1159,12 +1175,74 @@ function frame(now){
   requestAnimationFrame(frame);
 }
 
+/* ================= 字型：載入後重畫，並自動縮字避免溢出 ================= */
+function fitPhrases(){
+  const box=$('fuLines');if(!box)return;
+  const w=box.clientWidth;if(!w)return;
+  const ps=[...box.querySelectorAll('.ph')];
+  ps.forEach(p=>p.style.fontSize='');
+  let k=1;
+  ps.forEach(p=>{if(p.scrollWidth>w)k=Math.min(k,w/p.scrollWidth*.96)});
+  if(k<1)ps.forEach(p=>{p.style.fontSize=(parseFloat(getComputedStyle(p).fontSize)*k).toFixed(1)+'px'});
+}
+let fontsOK=false;
+function loadFonts(){
+  if(!document.fonts||!document.fonts.load)return Promise.resolve();
+  const txt=[...new Set((document.body.innerText+JSON.stringify(DEF)+JSON.stringify(CHAPTERS)+'壽奠敕').match(/[㐀-鿿]/g)||[])].join('');
+  return Promise.all(['400 24px "LXGW WenKai TC"','700 24px "LXGW WenKai TC"','400 24px "Ma Shan Zheng"'].map(f=>document.fonts.load(f,txt))).catch(()=>{});
+}
+function initFonts(){
+  const go=$('go'),label=go.textContent;go.disabled=true;go.textContent='載入字型…';
+  const done=()=>{if(fontsOK)return;fontsOK=true;go.disabled=false;go.textContent=label;buildStatic();fitPhrases()};
+  Promise.race([loadFonts(),new Promise(r=>setTimeout(r,4000))]).then(done);
+  if(document.fonts&&document.fonts.addEventListener)document.fonts.addEventListener('loadingdone',()=>{buildStatic();fitPhrases()});
+}
+
+/* ================= 難度與存檔 ================= */
+const DIFFS={easy:{n:'入門',r:.65,w:1.7},normal:{n:'普通',r:.8,w:1.4},hard:{n:'困難',r:.9,w:1.25}};
+const RANKS=['學徒','道士','法師','天師'];
+const SAVE_KEY='chiling-night-save-v1';
+let SAVE={diff:'normal',plays:0,rec:{}};
+try{const o=JSON.parse(localStorage.getItem(SAVE_KEY)||'null');if(o&&typeof o==='object')SAVE=Object.assign(SAVE,o)}catch(e){}
+if(!DIFFS[SAVE.diff])SAVE.diff='normal';
+function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE))}catch(e){}}
+function curRec(){return SAVE.rec[SAVE.diff]||(SAVE.rec[SAVE.diff]={best:0,rank:0,reach:0,won:0})}
+function applyDiff(){const d=DIFFS[SAVE.diff];MATCH_RATIO=d.r;WINDOW=d.w}
+function renderDiff(){
+  $('diffSel').innerHTML=Object.keys(DIFFS).map(k=>`<button data-k="${k}" class="${k===SAVE.diff?'sel':''}">${DIFFS[k].n}</button>`).join('');
+}
+function renderRec(){
+  const r=curRec();
+  $('rec').innerHTML=r.best||r.won?`最高功德 ${r.best}　最高評等「${RANKS[r.rank]}」<br>最遠到達 ${CHAPTERS[r.reach].title}${r.won?`　通關 ${r.won} 次`:''}`:'';
+}
+$('diffSel').onclick=e=>{const b=e.target.closest('button');if(!b)return;SAVE.diff=b.dataset.k;applyDiff();persist();renderDiff();renderRec()};
+function saveResult(win,rank,ci){
+  const r=curRec(),notes=[];
+  SAVE.plays++;
+  if(st.score>r.best){r.best=st.score;notes.push('最高功德新紀錄')}
+  const ri=RANKS.indexOf(rank);if(ri>r.rank){r.rank=ri;notes.push(`評等晉升「${rank}」`)}
+  if(ci>r.reach){r.reach=ci;notes.push(`首度到達${CHAPTERS[ci].title}`)}
+  if(win)r.won++;
+  persist();renderRec();
+  $('newrec').innerHTML=notes.length?'新紀錄！<br>'+notes.join('<br>'):'';
+}
+applyDiff();renderDiff();renderRec();
+
+/* ================= 相容性提示 ================= */
+if(!SR){
+  $('mic').textContent='不支援';$('mic').style.opacity='.5';
+  $('typed').placeholder='此瀏覽器無語音辨識：在此打字念咒';
+  $('warn').textContent='此瀏覽器不支援語音辨識，將以打字模式進行。要用聲音唸咒，請改用 Chrome 或 Edge。';
+}else if(window.isSecureContext===false){
+  $('warn').textContent='目前不是 HTTPS 連線，瀏覽器可能會封鎖麥克風。請改用 https 網址開啟。';
+}
+
 /* ================= 啟動 ================= */
 addEventListener('resize',resize);
 buildGrain();resize();renderLives();renderThunder();
-if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>buildStatic());
+initFonts();
 requestAnimationFrame(frame);
-window.__g={st,ORDER,DEF,CHAPTERS,onHeard,spawn,newGame,setScene:s=>{st.scene=s;buildStatic()}};
+window.__g={st,ORDER,DEF,CHAPTERS,onHeard,spawn,newGame,endGame,fitPhrases,setScene:s=>{st.scene=s;buildStatic()}};
 })();
 
 </script>
